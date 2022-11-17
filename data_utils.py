@@ -226,6 +226,44 @@ def show_random_images(image_dir: str, k: int=3, pattern="*.jpg"):
     labels = [get_image_class(x) for x in img_paths]
     plot_images(img_paths, labels)
     
+def plot_patched_image (image: Union[pathlib.Path, str, Image.Image, torch.Tensor], patch_size: int=16):
+    
+    img = _get_image_data(image)
+    assert img.shape[0] == img.shape[1], "Image must be square"
+    img_size = img.shape[1]
+    
+    assert img_size % patch_size == 0, "Image size must be divisible by patch size" 
+    num_patches = img_size/patch_size
+    print(f"Image size: {img.shape[0]} x {img.shape[1]}\
+        \nNumber of patches per row: {num_patches}\
+        \nNumber of patches per column: {num_patches}\
+        \nTotal patches: {num_patches*num_patches}\
+        \nPatch size: {patch_size} pixels x {patch_size} pixels")
+    
+    fig, axs = plt.subplots(nrows=img_size//patch_size, # need int
+            ncols=img_size//patch_size,
+            figsize=(num_patches, num_patches),
+            sharex=True,
+            sharey=True,
+    )
+    
+    for i, h in enumerate(range(0, img_size, patch_size)):
+        for j, w in enumerate(range(0, img_size, patch_size)):
+            ax = axs[i, j]
+            ax.imshow(img[h:h+patch_size, w:w+patch_size, :])
+            
+            ax.set_ylabel(i+1, 
+                        rotation="horizontal", 
+                        horizontalalignment="right",
+                        verticalalignment="center")
+            ax.set_xlabel(j+1)
+            ax.set_xticks([])
+            ax.set_yticks([])
+            ax.label_outer()
+            
+    fig.suptitle("Image Patchified", fontsize=16)
+    plt.show()
+    
 def show_image_statistics(image_dir, pattern="*.jpg"):
     """
     Show statistics of all matched images under image_dir
